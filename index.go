@@ -1,13 +1,13 @@
 package mutex
 
 import (
-	"github.com/chefsgo/chef"
+	"github.com/chefsgo/mutex"
 )
 
-func Driver() chef.MutexDriver {
-	return &defaultMutexDriver{}
+func Driver() mutex.Driver {
+	return &defaultDriver{}
 }
 
 func init() {
-	chef.Register("default", Driver())
+	mutex.Register("default", Driver())
 }

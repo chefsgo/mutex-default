@@ -5,50 +5,50 @@ import (
 	"sync"
 	"time"
 
-	"github.com/chefsgo/chef"
+	"github.com/chefsgo/mutex"
 )
 
 //默认mutex驱动
 
 type (
-	defaultMutexDriver  struct{}
-	defaultMutexConnect struct {
+	defaultDriver  struct{}
+	defaultConnect struct {
 		name    string
-		config  chef.MutexConfig
-		setting defaultMutexSetting
+		config  mutex.Config
+		setting defaultSetting
 		locks   sync.Map
 	}
-	defaultMutexSetting struct {
+	defaultSetting struct {
 	}
-	defaultMutexValue struct {
+	defaultValue struct {
 		Expiry time.Time
 	}
 )
 
-func (driver *defaultMutexDriver) Connect(name string, config chef.MutexConfig) (chef.MutexConnect, error) {
-	setting := defaultMutexSetting{}
-	return &defaultMutexConnect{
+func (driver *defaultDriver) Connect(name string, config mutex.Config) (mutex.Connect, error) {
+	setting := defaultSetting{}
+	return &defaultConnect{
 		name: name, config: config, setting: setting,
 	}, nil
 }
 
 //打开连接
 // 待处理，需要一个定时器，定期清理过期的数据
-func (connect *defaultMutexConnect) Open() error {
+func (connect *defaultConnect) Open() error {
 	return nil
 }
 
 //关闭连接
-func (connect *defaultMutexConnect) Close() error {
+func (connect *defaultConnect) Close() error {
 	return nil
 }
 
 //待优化，加上超时设置
-func (connect *defaultMutexConnect) Lock(key string, expiry time.Duration) error {
+func (connect *defaultConnect) Lock(key string, expiry time.Duration) error {
 	now := time.Now()
 
 	if vv, ok := connect.locks.Load(key); ok {
-		if tm, ok := vv.(defaultMutexValue); ok {
+		if tm, ok := vv.(defaultValue); ok {
 			if tm.Expiry.UnixNano() > now.UnixNano() {
 				return errors.New("existed")
 			}
@@ -59,7 +59,7 @@ func (connect *defaultMutexConnect) Lock(key string, expiry time.Duration) error
 		expiry = connect.config.Expiry
 	}
 
-	value := defaultMutexValue{
+	value := defaultValue{
 		Expiry: now.Add(connect.config.Expiry),
 	}
 
@@ -67,7 +67,7 @@ func (connect *defaultMutexConnect) Lock(key string, expiry time.Duration) error
 
 	return nil
 }
-func (connect *defaultMutexConnect) Unlock(key string) error {
+func (connect *defaultConnect) Unlock(key string) error {
 	connect.locks.Delete(key)
 	return nil
 }
